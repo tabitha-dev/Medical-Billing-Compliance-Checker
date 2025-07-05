@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link
+        rel="stylesheet"
+        as="style"
+        onload="this.rel='stylesheet'"
+        href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    />
+    <title>Medical Billing Compliance Checker</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        /* Custom styles for select button SVG to fix weird dropdown appearance */
+        .form-select {
+            background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724px%27 height=%2724px%27 fill=%27rgb(99,121,136)%27 viewBox=%270 0 256 256%27%3e%3cpath d=%27M181.66,170.34a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-48-48a8,8,0,0,1,11.32-11.32L128,212.69l42.34-42.35A8,8,0,0,1,181.66,170.34Zm-96-84.68L128,43.31l42.34,42.35a8,8,0,0,0,11.32-11.32l-48-48a8,8,0,0,0-11.32,0l-48,48A8,8,0,0,0,85.66,85.66Z%27%3e%3c/path%3e%3c/svg%3e');
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 0.8em 0.8em;
+            padding-right: 2.5rem; /* Adjust padding to make space for the icon */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        /* All pages are hidden by default, login page is explicitly shown */
+        .page-content {
+            display: none;
+        }
+        #login-page {
+            display: flex; /* Login page is shown by default */
+        }
+        /* Basic modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .error-message {
+            color: #e73508;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
+    <div class="layout-container flex h-full grow flex-col">
+        <!-- Header -->
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#f0f3f4] px-4 py-3 sm:px-10">
+            <div class="flex items-center gap-2 sm:gap-4 text-[#111518]">
+                <div class="size-4">
+                    <!-- Icon SVG -->
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.8261 17.4264C16.7203 18.1174 20.2244 18.5217 24 18.5217C27.7756 18.5217 31.2797 18.1174 34.1739 17.4264C36.9144 16.7722 39.9967 15.2331 41.3563 14.1648L24.8486 40.6391C24.4571 41.267 23.5429 41.267 23.1514 40.6391L6.64374 14.1648C8.00331 15.2331 11.0856 16.7722 13.8261 17.4264Z" fill="currentColor"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M39.998 12.236C39.9944 12.2537 39.9875 12.2845 39.9748 12.3294C39.9436 12.4399 39.8949 12.5741 39.8346 12.7175C39.8168 12.7597 39.7989 12.8007 39.7813 12.8398C38.5103 13.7113 35.9788 14.9393 33.7095 15.4811C30.9875 16.131 27.6413 16.5217 24 16.5217C20.3587 16.5217 17.0125 16.131 14.2905 15.4811C12.0012 14.9346 9.44505 13.6897 8.18538 12.8168C8.17384 12.7925 8.16216 12.767 8.15052 12.7408C8.09919 12.6249 8.05721 12.5114 8.02977 12.411C8.00356 12.3152 8.00039 12.2667 8.00004 12.2612C8.00004 12.261 8 12.2607 8.00004 12.2612C8.00004 12.2359 8.0104 11.9233 8.68485 11.3686C9.34546 10.8254 10.4222 10.2469 11.9291 9.72276C14.9242 8.68098 19.1919 8 24 8C28.8081 8 33.0758 8.68098 36.0709 9.72276C37.5778 10.2469 38.6545 10.8254 39.3151 11.3686C39.9006 11.8501 39.9857 12.1489 39.998 12.236ZM4.95178 15.2312L21.4543 41.6973C22.6288 43.5809 25.3712 43.5809 26.5457 41.6973L43.0534 15.223C43.0709 15.1948 43.0878 15.1662 43.104 15.1371L41.3563 14.1648C43.104 15.1371 43.1038 15.1374 43.104 15.1371L43.1051 15.135L43.1065 15.1325L43.1101 15.1261L43.1199 15.1082C43.1276 15.094 43.1377 15.0754 43.1497 15.0527C43.1738 15.0075 43.2062 14.9455 43.244 14.8701C43.319 14.7208 43.4196 14.511 43.5217 14.2683C43.6901 13.8679 44 13.0689 44 12.2609C44 10.5573 43.003 9.22254 41.8558 8.2791C40.6947 7.32427 39.1354 6.55361 37.385 5.94477C8.86463 6.55361 7.30529 7.32428 6.14419 8.27911C4.99695 9.22255 3.99999 10.5573 3.99999 12.2609C3.99999 13.1275 4.29264 13.9078 4.49321 14.3607C4.60375 14.6102 4.71348 14.8196 4.79687 14.9689C4.83898 15.0444 4.87547 15.1065 4.9035 15.1529C4.91754 15.1762 4.92954 15.1957 4.93916 15.2111L4.94662 15.223L4.95178 15.2312ZM35.9868 18.996L24 38.22L12.0131 18.996C12.4661 19.1391 12.9179 19.2658 13.3617 19.3718C16.4281 20.1039 20.0901 20.5217 24 20.5217C27.9099 20.5217 31.5719 20.1039 34.6383 19.3718C35.082 19.2658 35.5339 19.1391 35.9868 18.996Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em]">Billing Compliance</h2>
+            </div>
+            <div class="flex flex-1 justify-end gap-8">
+                <div class="flex items-center gap-4 sm:gap-9">
+                    <a class="text-[#111518] text-sm font-medium leading-normal cursor-pointer" id="nav-dashboard" onclick="showPage('dashboard')">Dashboard</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-rules" onclick="showPage('rules')">Rules</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-claims" onclick="showPage('claims')">Claims</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-codes" onclick="showPage('codes')">Codes</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-reports" onclick="showPage('reports')">Reports</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-settings" onclick="showPage('settings')">Settings</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-notifications" onclick="showPage('notifications')">
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                <path d="M220,176V104a92,92,0,0,0-184,0v72L40,200v8a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16v-8ZM128,232a20,20,0,0,1-20-20h40A20,20,0,0,1,128,232Zm76-48H52V104a76,76,0,0,1,152,0Z"></path>
+                            </svg>
+                            <span id="notification-badge" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">3</span>
+                        </div>
+                    </a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-audit-log" onclick="showPage('audit-log')">Audit Log</a>
+                    <a class="text-[#637988] text-sm font-medium leading-normal cursor-pointer" id="nav-logout" onclick="logout()">Logout</a>
+                </div>
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7MqR2DVhNMTYqPiAbfTVeqUPuEbWsj1fgtzyZznB6r3tELflLox2hW29cmdIVaMNSzXJvVhuAz_rFsa_yeX-PLdeMaH9PiScZxoYwHHTZcu2r-VU7ayPHBae7kUE7VEKTdXZnzZIl37RsWgdHAyHvmG-mnt7fK458K3VF1fnQFSPfwGyhel3HJWGJA3PQOmewHH7mK-RMTnO6N7Jjbgy9FVjH28guuujSxsiDCzt4_Hkv4CebE4UckUBTjcqwBPoPgmEjgdKwokA");'></div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="px-4 py-5 sm:px-10 md:px-20 lg:px-40 flex flex-1 justify-center">
+            <!-- Login Page -->
+            <div id="login-page" class="page-content layout-content-container flex flex-col max-w-[400px] flex-1 items-center justify-center min-h-[calc(100vh-100px)]">
+                <h2 class="text-[#111518] tracking-light text-[32px] font-bold leading-tight mb-6">Login</h2>
+                <div class="w-full flex flex-col gap-4">
+                    <input id="username" type="text" placeholder="Username" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="admin" />
+                    <input id="password" type="password" placeholder="Password" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="password" />
+                    <select id="role-select" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal">
+                        <option value="admin">Admin</option>
+                        <option value="biller">Billing Specialist</option>
+                        <option value="auditor">Auditor</option>
+                    </select>
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em] w-full" onclick="login()">
+                        <span class="truncate">Login</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Dashboard</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Overview of your billing compliance metrics</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 p-4">
+                    <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Claims Processed</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">12,345</p>
+                        <p class="text-[#078838] text-base font-medium leading-normal">+12%</p>
+                    </div>
+                    <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Compliance Rate</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">98.7%</p>
+                        <p class="text-[#e73508] text-base font-medium leading-normal">-0.5%</p>
+                    </div>
+                    <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                        <p class="text-[#111518] tracking-light text-base font-medium leading-normal">Error Summary</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">234</p>
+                        <p class="text-[#078838] text-base font-medium leading-normal">+5%</p>
+                    </div>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Claims Processing</h2>
+                <div class="flex flex-wrap gap-4 px-4 py-6">
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Claims Processed Over Time</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">12,345</p>
+                        <div class="flex min-h-[180px] flex-1 flex-col gap-8 py-4">
+                            <canvas id="claims-chart" width="400" height="148" class="bg-[#f0f3f4] rounded-lg"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Error Distribution by Type</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">234</p>
+                        <div class="flex gap-1">
+                            <p class="text-[#637988] text-base font-normal leading-normal">Last 30 Days</p>
+                            <p class="text-[#078838] text-base font-medium leading-normal">+5%</p>
+                        </div>
+                        <div class="grid min-h-[180px] grid-flow-col gap-6 grid-rows-[1fr_auto] items-end justify-items-center px-3">
+                            <div class="border-[#637988] bg-[#f0f3f4] border-t-2 w-full" style="height: 50%;"></div>
+                            <p class="text-[#637988] text-[13px] font-bold leading-normal tracking-[0.015em]">Type A</p>
+                            <div class="border-[#637988] bg-[#f0f3f4] border-t-2 w-full" style="height: 70%;"></div>
+                            <p class="text-[#637988] text-[13px] font-bold leading-normal tracking-[0.015em]">Type B</p>
+                            <div class="border-[#637988] bg-[#f0f3f4] border-t-2 w-full" style="height: 60%;"></div>
+                            <p class="text-[#637988] text-[13px] font-bold leading-normal tracking-[0.015em]">Type C</p>
+                            <div class="border-[#637988] bg-[#f0f3f4] border-t-2 w-full" style="height: 90%;"></div>
+                            <p class="text-[#637988] text-[13px] font-bold leading-normal tracking-[0.015em]">Type D</p>
+                            <div class="border-[#637988] bg-[#f0f3f4] border-t-2 w-full" style="height: 80%;"></div>
+                            <p class="text-[#637988] text-[13px] font-bold leading-normal tracking-[0.015em]">Type E</p>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Predictive Insights</h2>
+                <div class="flex flex-wrap gap-4 px-4 py-6">
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Predicted Rejection Rate (Next Month)</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">3.2%</p>
+                        <p class="text-[#e73508] text-base font-medium leading-normal">Potential increase due to new payer policies.</p>
+                    </div>
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Top 3 Predicted Error Types</p>
+                        <ul class="list-disc list-inside text-[#111518] text-base font-normal leading-normal">
+                            <li>Diagnosis-Procedure Mismatch</li>
+                            <li>Missing Prior Authorization</li>
+                            <li>Incorrect Modifier Usage</li>
+                        </ul>
+                    </div>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Key Compliance Requirements & Software Features</h2>
+                <div id="compliance-info" class="flex flex-wrap gap-4 p-4">
+                    <!-- Content will be dynamically loaded here by JS -->
+                </div>
+            </div>
+
+            <!-- Rules Page -->
+            <div id="rules-page" class="page-content flex flex-col lg:flex-row gap-1 px-4 py-5 sm:px-10 md:px-20 lg:px-40 flex-1 justify-center">
+                <div class="layout-content-container flex-col w-full lg:w-80">
+                    <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Rules</h2>
+                    <div class="px-4 py-3">
+                        <label class="flex flex-col min-w-40 h-12 w-full">
+                            <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                                <div class="text-[#637988] flex border-none bg-[#f0f3f4] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                        <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                                    </svg>
+                                </div>
+                                <input id="rule-search-input" placeholder="Search rules" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border-none bg-[#f0f3f4] focus:border-none h-full placeholder:text-[#637988] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" value="" oninput="renderRulesList(undefined, this.value)" />
+                            </div>
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-4 min-h-14 justify-between cursor-pointer hover:bg-[#f0f3f4]" onclick="renderRulesList('all')">
+                        <p class="text-[#111518] text-base font-normal leading-normal flex-1 truncate">All Rules</p>
+                        <div class="shrink-0"><p class="text-[#111518] text-base font-normal leading-normal">120</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-4 min-h-14 justify-between cursor-pointer hover:bg-[#f0f3f4]" onclick="renderRulesList('active')">
+                        <p class="text-[#111518] text-base font-normal leading-normal flex-1 truncate">Active Rules</p>
+                        <div class="shrink-0"><p class="text-[#111518] text-base font-normal leading-normal">100</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-4 min-h-14 justify-between cursor-pointer hover:bg-[#f0f3f4]" onclick="renderRulesList('inactive')">
+                        <p class="text-[#111518] text-base font-normal leading-normal flex-1 truncate">Inactive Rules</p>
+                        <div class="shrink-0"><p class="text-[#111518] text-base font-normal leading-normal">20</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-4 min-h-14 justify-between cursor-pointer hover:bg-[#f0f3f4]" onclick="renderRulesList('draft')">
+                        <p class="text-[#111515] text-base font-normal leading-normal flex-1 truncate">Draft Rules</p>
+                        <div class="shrink-0"><p class="text-[#111518] text-base font-normal leading-normal">5</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-4 min-h-14 justify-between cursor-pointer hover:bg-[#f0f3f4]" onclick="renderRulesList('archived')">
+                        <p class="text-[#111515] text-base font-normal leading-normal flex-1 truncate">Archived Rules</p>
+                        <div class="shrink-0"><p class="text-[#111518] text-base font-normal leading-normal">10</p></div>
+                    </div>
+                    <div class="flex px-4 py-3 justify-start">
+                        <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="importRules()">
+                            <span class="truncate">Import Rules</span>
+                        </button>
+                        <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em] ml-2" onclick="exportRules()">
+                            <span class="truncate">Export Rules</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="rule-editor-section" class="layout-content-container flex flex-col max-w-[960px] flex-1 lg:ml-4">
+                    <div class="flex flex-wrap justify-between gap-3 p-4">
+                        <div class="flex min-w-72 flex-col gap-3">
+                            <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Rule Editor</p>
+                            <p class="text-[#637988] text-sm font-normal leading-normal">Create and manage billing rules and regulations</p>
+                        </div>
+                    </div>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Rule Name</p>
+                            <input id="ruleName" placeholder="Enter rule name" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                            <span id="ruleName-error" class="error-message" style="display:none;">Rule Name is required.</span>
+                        </label>
+                    </div>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Rule Category</p>
+                            <select id="ruleCategory" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal">
+                                <option value="Medicare">Medicare</option>
+                                <option value="Medicaid">Medicaid</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="ICD-10">ICD-10</option>
+                                <option value="CPT">CPT</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Rule Description</p>
+                            <textarea id="ruleDescription" placeholder="Enter rule description" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] min-h-36 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal"></textarea>
+                        </label>
+                    </div>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Rule Priority</p>
+                            <select id="rulePriority" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal">
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </label>
+                    </div>
+                    <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Rule Logic</h3>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Rule Expression <span class="text-[#637988] cursor-pointer" onclick="alert('Rule Expression defines the logic for the rule. E.g., CPT code = \'99203\' AND diagnosis code = \'J45.909\'.')">ⓘ</span></p>
+                            <textarea id="ruleExpression" placeholder="Enter rule expression (e.g., CPT code = '99203' AND diagnosis code = 'J45.909')" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] min-h-36 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal"></textarea>
+                        </label>
+                    </div>
+                    <div class="flex px-4 py-3 justify-start">
+                        <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="testRule()">
+                            <span class="truncate">Test Rule</span>
+                        </button>
+                    </div>
+                    <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Version Control</h3>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Version Number</p>
+                            <input id="ruleVersionNumber" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="1.0" />
+                        </label>
+                    </div>
+                    <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-[#111518] text-base font-medium leading-normal pb-2">Version Notes</p>
+                            <textarea id="ruleVersionNotes" placeholder="Enter version notes" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] min-h-36 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal"></textarea>
+                        </label>
+                    </div>
+                    <div class="flex justify-stretch">
+                        <div class="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-end">
+                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="clearRuleEditor()">
+                                <span class="truncate">Cancel</span>
+                            </button>
+                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="saveRule()">
+                                <span class="truncate">Save Rule</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Claims Page -->
+            <div id="claims-page" class="page-content layout-content-container flex flex-col w-full lg:w-[512px] max-w-[960px] py-5 flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">New Claim</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Enter claim details for compliance checking.</p>
+                    </div>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Patient Name</p>
+                        <input id="patientName" placeholder="Enter patient's full name" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                        <span id="patientName-error" class="error-message" style="display:none;">Patient Name is required.</span>
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Date of Birth</p>
+                        <input id="patientDob" type="date" placeholder="MM/DD/YYYY" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Diagnosis Codes <span class="text-[#637988] cursor-pointer" onclick="alert('Enter comma-separated ICD-10 diagnosis codes. E.g., I10, J45.909')">ⓘ</span></p>
+                        <input id="diagnosisCodes" placeholder="Enter diagnosis codes (ICD-10)" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Procedure Codes <span class="text-[#637988] cursor-pointer" onclick="alert('Enter comma-separated CPT/HCPCS procedure codes. E.g., 99213, 85025')">ⓘ</span></p>
+                        <input id="procedureCodes" placeholder="Enter procedure codes (CPT/HCPCS)" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Charges</p>
+                        <input id="charges" type="number" step="0.01" placeholder="Enter total charges" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex items-center gap-2">
+                        <input id="realTimeValidation" type="checkbox" class="form-checkbox size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" onclick="toggleRealtimeValidation()">
+                        <p class="text-[#111518] text-base font-normal leading-normal">Enable Real-time Validation</p>
+                    </label>
+                </div>
+                <div class="flex px-4 py-3 justify-end">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="batchUploadClaims()">
+                        <span class="truncate">Batch Upload Claims</span>
+                    </button>
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="checkCompliance()">
+                        <span class="truncate">Check Compliance</span>
+                    </button>
+                </div>
+                <!-- Compliance Check Results Section -->
+                <div id="compliance-results-section" style="display: none;">
+                    <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Check Summary</h3>
+                    <div class="flex flex-wrap gap-4 p-4">
+                        <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                            <p class="text-[#111518] text-base font-medium leading-normal">Total Checks</p>
+                            <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">150</p>
+                        </div>
+                        <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                            <p class="text-[#111518] text-base font-medium leading-normal">Errors</p>
+                            <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">5</p>
+                        </div>
+                        <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 bg-[#f0f3f4]">
+                            <p class="text-[#111518] text-base font-medium leading-normal">Warnings</p>
+                            <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">12</p>
+                        </div>
+                    </div>
+                    <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Detailed Results</h3>
+                    <div class="px-4 py-3 @container">
+                        <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                            <table class="flex-1">
+                                <thead>
+                                    <tr class="bg-white">
+                                        <th class="table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-120 px-4 py-3 text-left text-[#111518] w-[400px] text-sm font-medium leading-normal">Check ID</th>
+                                        <th class="table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-240 px-4 py-3 text-left text-[#111518] w-[400px] text-sm font-medium leading-normal">Rule Name</th>
+                                        <th class="table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-360 px-4 py-3 text-left text-[#111518] w-60 text-sm font-medium leading-normal">Status</th>
+                                        <th class="table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-480 px-4 py-3 text-left text-[#111518] w-[400px] text-sm font-medium leading-normal">Description</th>
+                                        <th class="table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-600 px-4 py-3 text-left text-[#111518] w-[400px] text-sm font-medium leading-normal">Suggestions</th>
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-t border-t-[#dce1e5]">
+                                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">Check-001</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Diagnosis Code Validation</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-medium leading-normal w-full">
+                                                <span class="truncate">Error</span>
+                                            </button>
+                                        </td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Invalid diagnosis code 'XYZ123' found. This code does not match the current coding standards.</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Update the diagnosis code to a valid ICD-10 code.</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="text-[#1993e5] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAppeal()">Appeal</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-t border-t-[#dce1e5]">
+                                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">Check-002</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Procedure Code Validation</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-medium leading-normal w-full">
+                                                <span class="truncate">Warning</span>
+                                            </button>
+                                        </td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Procedure code 'ABC456' is flagged as potentially outdated. Consider using a more recent code.</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Review the procedure code and update if necessary.</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="text-[#1993e5] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAppeal()">Appeal</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-t border-t-[#dce1e5]">
+                                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">Check-003</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Modifier Validation</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-medium leading-normal w-full">
+                                                <span class="truncate">Error</span>
+                                            </button>
+                                        </td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Modifier 'LM' is not applicable to the procedure code 'DEF789'.</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Remove the modifier or update the procedure code.</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="text-[#1993e5] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAppeal()">Appeal</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-t border-t-[#dce1e5]">
+                                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">Check-004</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Billing Amount Validation</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-medium leading-normal w-full">
+                                                <span class="truncate">Warning</span>
+                                            </button>
+                                        </td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Billing amount exceeds the expected range for the procedure code 'GHI012'.</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Verify the billing amount and adjust if needed.</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="text-[#1993e5] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAppeal()">Appeal</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-t border-t-[#dce1e5]">
+                                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">Check-005</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Patient Information Validation</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-medium leading-normal w-full">
+                                                <span class="truncate">Error</span>
+                                            </button>
+                                        </td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Missing patient date of birth. This information is required for billing.</td>
+                                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Add the patient's date of birth to the billing data.</td>
+                                        <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                            <button class="text-[#1993e5] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAppeal()">Appeal</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <style>
+                            @container(max-width:120px){.table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-120{display: none;}}
+                            @container(max-width:240px){.table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-240{display: none;}}
+                            @container(max-width:360px){.table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-360{display: none;}}
+                            @container(max-width:480px){.table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-480{display: none;}}
+                            @container(max-width:600px){.table-d22ef77b-a28e-4bf3-b74e-ec7f1ea7df24-column-600{display: none;}}
+                        </style>
+                    </div>
+                </div>
+                <!-- Claim History Section -->
+                <div id="claim-history-section" class="py-5">
+                    <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Claim History</h3>
+                    <div class="px-4 py-3 @container">
+                        <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                            <table class="flex-1" id="claim-history-table">
+                                <thead>
+                                    <tr class="bg-white">
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Claim ID</th>
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Patient Name</th>
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Submission Date</th>
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Status</th>
+                                        <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Errors/Warnings</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Claims will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Codes Page -->
+            <div id="codes-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Code Search</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Search for ICD-10, CPT, and other medical codes</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-[#637988] flex border-none bg-[#f0f3f4] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                                </svg>
+                            </div>
+                            <input id="code-search-input" placeholder="Search for codes or health topics" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border-none bg-[#f0f3f4] focus:border-none h-full placeholder:text-[#637988] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" value="" />
+                            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-full px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="searchHealthfinderTopics()">
+                                <span class="truncate">Search</span>
+                            </button>
+                        </div>
+                    </label>
+                </div>
+                <div class="pb-3">
+                    <div class="flex border-b border-[#dce1e5] px-4 gap-8">
+                        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-[#111518] text-[#111518] pb-[13px] pt-4" href="#" onclick="handleCodeTabClick('icd-10')">
+                            <p class="text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]">ICD-10</p>
+                        </a>
+                        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#637988] pb-[13px] pt-4" href="#" onclick="handleCodeTabClick('cpt')">
+                            <p class="text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]">CPT</p>
+                        </a>
+                        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#637988] pb-[13px] pt-4" href="#" onclick="handleCodeTabClick('other')">
+                            <p class="text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]">Other Codes</p>
+                        </a>
+                        <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#637988] pb-[13px] pt-4" onclick="showPage('payer-policies')">
+                            <p class="text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]">Payer Policies</p>
+                        </a>
+                    </div>
+                </div>
+                <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Health Topics</h3>
+                <div id="health-topics-list" class="flex gap-3 p-3 flex-wrap pr-4">
+                    <!-- Health topics will be loaded here dynamically -->
+                    <p class="text-[#637988] text-sm font-normal leading-normal">Loading health topics...</p>
+                </div>
+                <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Code Details</h3>
+                <div id="topic-details" class="p-4 grid grid-cols-[20%_1fr] gap-x-6">
+                    <p class="text-[#637988] text-sm font-normal leading-normal col-span-2">Select a topic or search to view details.</p>
+                </div>
+            </div>
+
+            <!-- Payer Policies Page (New Section) -->
+            <div id="payer-policies-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Payer Policy Library</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Browse and search for payer-specific policies and guidelines.</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-[#637988] flex border-none bg-[#f0f3f4] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                                </svg>
+                            </div>
+                            <input id="payer-policy-search-input" placeholder="Search policies" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border-none bg-[#f0f3f4] focus:border-none h-full placeholder:text-[#637988] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" value="" />
+                        </div>
+                    </label>
+                </div>
+                <div class="px-4 py-3 @container">
+                    <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                        <table class="flex-1">
+                            <thead>
+                                <tr class="bg-white">
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Payer Name</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Payer ID</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Effective Date</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Medicare</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">12345</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]">Edit</td>
+                                </tr>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Blue Cross Blue Shield</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">67890</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">2023-10-15</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Details on services requiring pre-approval.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="reports-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Reports</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Generate and view various billing compliance reports.</p>
+                    </div>
+                </div>
+                <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Compliance Trends</h3>
+                <div class="flex flex-wrap gap-4 p-4">
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Monthly Compliance Rate</p>
+                        <p class="text-[#111518] tracking-light text-2xl font-bold leading-tight">98.0%</p>
+                        <p class="text-[#078838] text-base font-medium leading-normal">Stable over last 6 months</p>
+                        <div class="flex min-h-[120px] flex-1 flex-col gap-8 py-4">
+                            <canvas id="compliance-chart" width="400" height="120" class="bg-[#f0f3f4] rounded-lg"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                        <p class="text-[#111518] text-base font-medium leading-normal">Top 5 Rejection Reasons</p>
+                        <ul class="list-disc list-inside text-[#111518] text-base font-normal leading-normal">
+                            <li>Incorrect Diagnosis Code (25%)</li>
+                            <li>Missing Prior Authorization (20%)</li>
+                            <li>Invalid Procedure Code (15%)</li>
+                            <li>Duplicate Claim (10%)</li>
+                            <li>Modifier Error (8%)</li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Custom Report Generator</h3>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Report Type</p>
+                        <select id="report-type" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal">
+                            <option value="Compliance Summary">Compliance Summary</option>
+                            <option value="Payer Performance">Payer Performance</option>
+                            <option value="Code Usage">Code Usage</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Date Range</p>
+                        <input id="report-date-range" type="text" placeholder="e.g., Last 30 Days" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="Last 30 Days" />
+                    </label>
+                </div>
+                <div class="flex px-4 py-3 justify-start">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="generateReport()">
+                        <span class="truncate">Generate Report</span>
+                    </button>
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em] ml-2" onclick="simulateExportPdf()">
+                        <span class="truncate">Export to PDF</span>
+                    </button>
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em] ml-2" onclick="exportReportCSV()">
+                        <span class="truncate">Export to CSV</span>
+                    </button>
+                </div>
+                <div id="report-output" class="px-4 py-3 text-[#111518] text-base font-normal leading-normal" style="display: none;">
+                    <!-- Report generation message will appear here -->
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Settings</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">Configure system settings, payer information, and user roles.</p>
+                    </div>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">General Settings</h2>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">System Name</p>
+                        <input id="systemName" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="Billing Compliance Checker" />
+                    </label>
+                </div>
+                <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Default Time Zone</p>
+                        <select id="defaultTimezone" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal">
+                            <option value="PST">PST</option>
+                            <option value="EST">EST</option>
+                            <option value="CST">CST</option>
+                        </select>
+                    </label>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Payer Management</h2>
+                <div class="px-4 py-3 @container">
+                    <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                        <table class="flex-1">
+                            <thead>
+                                <tr class="bg-white">
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Payer Name</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Payer ID</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Medicare</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">12345</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditPayer('Medicare')">Edit</td>
+                                </tr>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Blue Cross Blue Shield</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">67890</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditPayer('Blue Cross Blue Shield')">Edit</td>
+                                </tr>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Aetna</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">11223</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditPayer('Aetna')">Edit</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="flex px-4 py-3 justify-start">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAddPayer()">
+                        <span class="truncate">Add Payer</span>
+                    </button>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">User Management</h2>
+                <div class="px-4 py-3 @container">
+                    <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                        <table class="flex-1">
+                            <thead>
+                                <tr class="bg-white">
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">User Name</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Email</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Role</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Sophia Clark</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">sophia.clark@example.com</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditUser('Sophia Clark')">Edit</td>
+                                </tr>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Ethan Carter</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">ethan.carter@example.com</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Billing Specialist</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditUser('Ethan Carter')">Edit</td>
+                                </tr>
+                                <tr class="border-t border-t-[#dce1e5]">
+                                    <td class="h-[72px] px-4 py-2 text-[#111515] text-sm font-normal leading-normal">Olivia Bennett</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">olivia.bennett@example.com</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">Auditor</td>
+                                    <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateEditUser('Olivia Bennett')">Edit</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="flex px-4 py-3 justify-start">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="simulateAddUser()">
+                        <span class="truncate">Add User</span>
+                    </button>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Code Management</h2>
+                <div class="flex px-4 py-3 justify-start">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="updateCodeSets()">
+                        <span class="truncate">Update Code Sets (ICD-10, CPT)</span>
+                    </button>
+                </div>
+                <h2 class="text-[#111518] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Integrations</h2>
+                <div class="flex flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">EHR/PMS Integration Status</p>
+                        <select id="ehrIntegrationStatus" class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" onchange="handleEHRIntegrationChange()">
+                            <option value="Connected">Connected</option>
+                            <option value="Disconnected">Disconnected</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="flex flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                        <p class="text-[#111518] text-base font-medium leading-normal pb-2">Payer API Key</p>
+                        <input id="payerApiKey" type="password" placeholder="Enter API Key" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-14 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal" value="" />
+                    </label>
+                </div>
+                <div class="flex px-4 py-3 justify-end">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="saveSettings()">
+                        <span class="truncate">Save Settings</span>
+                    </button>
+                </div>
+                <div id="settings-status-message" class="px-4 py-3 text-[#078838] text-base font-normal leading-normal" style="display: none;">
+                    <!-- Settings save message will appear here -->
+                </div>
+            </div>
+
+            <!-- Notifications Page -->
+            <div id="notifications-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Notifications</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">View system alerts, compliance updates, and user messages.</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3" id="notification-list">
+                    <div class="flex flex-col gap-4">
+                        <div class="flex items-start gap-4 p-4 rounded-lg bg-[#f0f3f4]">
+                            <div class="size-6 text-[#e73508]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M236.8,188.09,147.15,28.72a16,16,0,0,0-28.3,0L19.2,188.09A16,16,0,0,0,32,216H224a16,16,0,0,0,12.8-27.91ZM120,80a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,112a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-[#111518] text-base font-medium leading-normal">Critical Error: Invalid Diagnosis Code Pattern</p>
+                                <p class="text-[#637988] text-sm font-normal leading-normal">A claim submitted on 2024-07-01 contained an invalid ICD-10 diagnosis code format. Please review and correct.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 rounded-lg bg-[#f0f3f4]">
+                            <div class="size-6 text-[#1993e5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-88a8,8,0,0,1-8,8H136v32a8,8,0,0,1-16,0V136H96a8,8,0,0,1,0-16h32V88a8,8,0,0,1,16,0v32h32A8,8,0,0,1,168,128Z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-[#111518] text-base font-medium leading-normal">New Payer Policy Update: Medicare</p>
+                                <p class="text-[#637988] text-sm font-normal leading-normal">Medicare has released new guidelines for telehealth services, effective August 1, 2024. Review the updated policies in the Code Search section.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 rounded-lg bg-[#f0f3f4]">
+                            <div class="size-6 text-[#078838]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16H120V40a8,8,0,0,1,16,0v80h88A8,8,0,0,1,224,128Z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-[#111518] text-base font-medium leading-normal">Compliance Rate Increase</p>
+                                <p class="text-[#637988] text-sm font-normal leading-normal">Your overall compliance rate has increased by 0.5% in the last week. Keep up the good work!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <!-- Audit Log Page (New) -->
+            <div id="audit-log-page" class="page-content layout-content-container flex flex-col max-w-[960px] flex-1">
+                <div class="flex flex-wrap justify-between gap-3 p-4">
+                    <div class="flex min-w-72 flex-col gap-3">
+                        <p class="text-[#111518] tracking-light text-[32px] font-bold leading-tight">Audit Log</p>
+                        <p class="text-[#637988] text-sm font-normal leading-normal">View system audit trail and change history.</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3 @container">
+                    <div class="flex overflow-hidden rounded-lg border border-[#dce1e5] bg-white">
+                        <table class="flex-1" id="audit-log-table">
+                            <thead>
+                                <tr class="bg-white">
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Timestamp</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">User</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Action</th>
+                                    <th class="px-4 py-3 text-left text-[#111518] text-sm font-medium leading-normal">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Audit log entries will be dynamically added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="flex px-4 py-3 justify-start">
+                    <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f0f3f4] text-[#111518] text-sm font-bold leading-normal tracking-[0.015em]" onclick="clearAuditLog()">
+                        <span class="truncate">Clear Log</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="appeal-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('appeal-modal')">&times;</span>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Simulate Appeal Process</h3>
+            <p class="text-[#637988] text-sm font-normal leading-normal mb-4">This is a mock appeal process. In a real application, you would fill out an appeal form here.</p>
+            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="alert('Appeal Submitted! (Simulated)'); closeModal('appeal-modal');">
+                <span class="truncate">Submit Appeal</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="edit-payer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('edit-payer-modal')">&times;</span>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Edit Payer (Mock)</h3>
+            <p id="edit-payer-name" class="text-[#111518] text-base font-medium leading-normal mb-4"></p>
+            <input type="text" placeholder="Payer ID" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" value="12345" />
+            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="alert('Payer details saved! (Simulated)'); closeModal('edit-payer-modal');">
+                <span class="truncate">Save</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="add-payer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('add-payer-modal')">&times;</span>
+            <h3 class="text-[#111515] text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Add New Payer (Mock)</h3>
+            <input type="text" placeholder="Payer Name" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" />
+            <input type="text" placeholder="Payer ID" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" />
+            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="alert('New Payer Added! (Simulated)'); closeModal('add-payer-modal');">
+                <span class="truncate">Add Payer</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('edit-user-modal')">&times;</span>
+            <h3 class="text-[#111518] text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Edit User (Mock)</h3>
+            <p id="edit-user-name" class="text-[#111518] text-base font-medium leading-normal mb-4"></p>
+            <input type="text" placeholder="Email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" value="user@example.com" />
+            <select class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2">
+                <option value="Administrator">Administrator</option>
+                <option value="Billing Specialist">Billing Specialist</option>
+                <option value="Auditor">Auditor</option>
+            </select>
+            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="alert('User details saved! (Simulated)'); closeModal('edit-user-modal');">
+                <span class="truncate">Save</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('add-user-modal')">&times;</span>
+            <h3 class="text-[#111515] text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Add New User (Mock)</h3>
+            <input type="text" placeholder="User Name" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" />
+            <input type="text" placeholder="Email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2" />
+            <select class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111518] focus:outline-0 focus:ring-0 border border-[#dce1e5] bg-white focus:border-[#dce1e5] h-10 placeholder:text-[#637988] p-[15px] text-base font-normal leading-normal mb-2">
+                <option value="Administrator">Administrator</option>
+                <option value="Billing Specialist">Billing Specialist</option>
+                <option value="Auditor">Auditor</option>
+            </select>
+            <button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#1993e5] text-white text-sm font-bold leading-normal tracking-[0.015em]" onclick="alert('New User Added! (Simulated)'); closeModal('add-user-modal');">
+                <span class="truncate">Add User</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Mock data for Healthfinder API to bypass CORS issues in demo environment
+        const mockHealthTopics = [
+            { Id: '25', Title: 'Keep Your Heart Healthy' },
+            { Id: '327', Title: 'Get Enough Folic Acid' },
+            { Id: '329', Title: 'Lower Your Risk of Falling' },
+            { Id: '514', Title: 'Get Screened for Breast Cancer' },
+            { Id: '531', Title: 'Get Screened' },
+            { Id: '30539', Title: 'Eat Healthy' },
+            { Id: '30547', Title: 'Get Active' },
+            { Id: '30560', Title: 'Manage Stress' },
+            { Id: '30610', Title: 'Quit Smoking' },
+            { Id: '34799', Title: 'Find and Access Preventive Services' }
+        ];
+
+        const mockTopicDetails = {
+            '25': {
+                Title: 'Keep Your Heart Healthy',
+                LastUpdate: '2024-01-15',
+                Sections: {
+                    Section: [
+                        { Title: 'Overview', Content: 'Learn how to keep your heart healthy with diet and exercise.' },
+                        { Title: 'Diet Tips', Content: 'Focus on fruits, vegetables, and whole grains. Limit saturated fats.' }
+                    ]
+                },
+                HealthfinderUrl: 'https://www.health.gov/myhealthfinder/topics/health-conditions/heart-health/keep-your-heart-healthy'
+            },
+            '30539': {
+                Title: 'Eat Healthy',
+                LastUpdate: '2023-11-01',
+                Sections: {
+                    Section: [
+                        { Title: 'Basics of Healthy Eating', Content: 'A balanced diet is crucial for overall health and well-being.' },
+                        { Title: 'Food Groups', Content: 'Understand the different food groups and recommended daily servings.' }
+                    ]
+                },
+                HealthfinderUrl: 'https://www.health.gov/myhealthfinder/topics/diet-nutrition/healthy-eating/eat-healthy'
+            },
+            '30610': {
+                Title: 'Quit Smoking',
+                LastUpdate: '2024-03-20',
+                Sections: {
+                    Section: [
+                        { Title: 'Why Quit?', Content: 'Quitting smoking dramatically improves your health and reduces disease risk.' },
+                        { Title: 'Tips for Quitting', Content: 'Strategies and resources to help you stop smoking.' }
+                    ]
+                },
+                HealthfinderUrl: 'https://www.health.gov/myhealthfinder/topics/health-conditions/heart-health/quit-smoking'
+            }
+            // Add more mock details as needed for other topic IDs
+        };
+
+        // Global state for notifications (simplified for vanilla JS)
+        let notificationCount = 3;
+        let claimsHistory = [
+            { id: 'CLM-001', patient: 'John Doe', date: '2024-06-20', status: 'Processed', errors: '0 Errors, 1 Warning' },
+            { id: 'CLM-002', patient: 'Jane Smith', date: '2024-06-18', status: 'Rejected', errors: '2 Errors, 0 Warnings' },
+        ];
+        let claimCounter = 2; // To generate new claim IDs
+
+        // Mock data for Key Requirements & Software Features
+        const mockKeyRequirements = [
+            "Deep knowledge of federal laws (HIPAA, False Claims Act), state regulations, and payer-specific guidelines.",
+            "Proficiency in CPT, ICD-10 (and potentially ICD-11), and HCPCS coding systems.",
+            "Ability to verify documentation supports billed services (medical necessity, detailed records).",
+            "Identification and prevention of fraudulent practices (upcoding, unbundling, duplicate billing).",
+            "Understanding of denial reasons and efficient appeal processes.",
+            "Ensuring billing practices align with unique payer policies (fee schedules, network requirements).",
+            "Adherence to HIPAA and implementation of robust security (encryption, access controls, and audit trails).",
+            "Establishing internal controls (segregation of duties, and approval processes).",
+            "Ongoing education on coding changes, regulatory updates, and billing best practices."
+        ];
+
+        const mockSoftwareFeatures = [
+            "Automated Claim Scrubbing: Tools that automatically check claims for errors before submission.",
+            "Real-Time Eligibility Verification: Features to quickly confirm patient insurance coverage.",
+            "Reporting and Analytics: Robust dashboards and customizable reports for monitoring key metrics.",
+            "Integration with EHR/EMR Systems: Seamless data flow between clinical and billing systems.",
+            "Secure Patient Portals: To enable patients to manage their billing information and make payments.",
+            "Mobile Accessibility: Allowing access to billing data and functionality from various devices."
+        ];
+
+        // Mock data for rules (expanded)
+        const mockRules = [
+            { id: 'RULE-001', name: 'Medicare CPT-Diagnosis Mismatch', category: 'Medicare', description: 'Flags CPT codes that are not typically covered for a given diagnosis under Medicare guidelines.', priority: 'high', expression: "CPT code NOT IN Medicare_Allowed_CPTs_for_Diagnosis", version: '1.0', notes: 'Initial version based on 2024 Medicare NCDs.', status: 'active' },
+            { id: 'RULE-002', name: 'Medicaid Prior Authorization Check', category: 'Medicaid', description: 'Ensures services requiring prior authorization for Medicaid patients have a valid authorization number.', priority: 'high', expression: "Service_Requires_PA AND NOT Has_PA_Number", version: '1.1', notes: 'Updated for new state Medicaid policies.', status: 'active' },
+            { id: 'RULE-003', name: 'Commercial Payer Modifier 25 Usage', category: 'Commercial', description: 'Checks for appropriate use of Modifier 25 with E/M services when another procedure is billed on the same day.', priority: 'medium', expression: "CPT_Code_Is_EM AND Has_Modifier_25 AND Another_Procedure_Billed", version: '1.0', notes: 'Initial commercial payer guidelines.', status: 'active' },
+            { id: 'RULE-004', name: 'ICD-10 Specificity Check (J45.909)', category: 'ICD-10', description: 'Flags non-specific ICD-10 codes like J45.909 (unspecified asthma) when more specific codes are available.', priority: 'low', expression: "Diagnosis_Code = 'J45.909'", version: '1.0', notes: 'Encourage higher specificity coding.', status: 'inactive' },
+            { id: 'RULE-005', name: 'CPT Code Outdated Warning', category: 'CPT', description: 'Warns if a CPT code is nearing its retirement date or has a newer alternative.', priority: 'medium', expression: "CPT_Code_Is_Outdated", version: '1.0', notes: 'Identifies codes from annual CPT updates.', status: 'active' },
+            { id: 'RULE-006', name: 'Duplicate Billing Prevention', category: 'Fraud', description: 'Detects claims with identical patient, service, date, and charge submitted within a short timeframe.', priority: 'high', expression: "Duplicate_Claim_Detected", version: '1.0', notes: 'Core fraud prevention rule.', status: 'active' },
+            { id: 'RULE-007', name: 'Telehealth Service Location Check', category: 'Medicare', description: 'Verifies that telehealth services are billed from an eligible originating site or patient home.', priority: 'high', expression: "Service_Is_Telehealth AND NOT Valid_Originating_Site", version: '1.0', notes: 'New Medicare telehealth guidelines.', status: 'active' },
+            { id: 'RULE-008', name: 'Draft Rule Example', category: 'Commercial', description: 'A rule currently under development and not active in production.', priority: 'low', expression: "Always_False", version: '0.1', notes: 'Draft for new commercial payer policy XYZ.', status: 'draft' },
+        ];
+
+        // Mock code lists for Codes page tabs
+        const mockICD10Codes = [
+            { code: 'I10', description: 'Essential (primary) hypertension' },
+            { code: 'J45.909', description: 'Unspecified asthma, uncomplicated' },
+            { code: 'E11.9', description: 'Type 2 diabetes mellitus without complications' },
+            { code: 'Z00.00', description: 'Encounter for general adult medical examination without abnormal findings' },
+            { code: 'M54.5', description: 'Low back pain' }
+        ];
+
+        const mockCPTCodes = [
+            { code: '99203', description: 'Office or other outpatient visit for the evaluation and management of a new patient, 30-44 minutes' },
+            { code: '99213', description: 'Office or other outpatient visit for the evaluation and management of an established patient, 15-29 minutes' },
+            { code: '99214', description: 'Office or other outpatient visit for the evaluation and management of an established patient, 30-39 minutes' },
+            { code: '99396', description: 'Preventive medicine visit, established patient, 40-64 years' },
+            { code: '85025', description: 'Complete (CBC) and automated differential WBC count' }
+        ];
+
+        const mockOtherCodes = [
+            { code: 'G0439', description: 'Annual wellness visit, G0439' },
+            { code: 'S0257', description: 'Counseling and discussion regarding advance directives' },
+            { code: 'A0428', description: 'Ambulance service, basic life support, non-emergency' }
+        ];
+
+        // Mock Audit Log
+        let auditLog = [
+            { timestamp: '2024-07-05 10:00:00', user: 'System', action: 'Application Start', details: 'Medical Billing Checker initialized.' },
+            { timestamp: '2024-07-05 10:05:30', user: 'Admin', action: 'Rule Edited', details: 'Rule RULE-001 (Medicare CPT-Diagnosis Mismatch) updated.' },
+            { timestamp: '2024-07-05 10:10:15', user: 'Billing Specialist', action: 'Claim Checked', details: 'Claim CLM-001 processed with warnings.' },
+        ];
+
+        let currentUserRole = null; // Global variable to store current user role
+
+        // --- Utility Functions ---
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function clearForm(formId) {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.querySelectorAll('input, textarea, select').forEach(element => {
+                    if (element.type === 'checkbox') {
+                        element.checked = false;
+                    } else if (element.tagName === 'SELECT') {
+                        element.value = element.options[0].value; // Reset to first option
+                    } else {
+                        element.value = '';
+                    }
+                });
+                form.querySelectorAll('.error-message').forEach(err => err.style.display = 'none');
+            }
+        }
+
+        function validateForm(formId, fields) {
+            let isValid = true;
+            fields.forEach(field => {
+                const input = document.getElementById(field.id);
+                const errorSpan = document.getElementById(`${field.id}-error`);
+                if (input && errorSpan) {
+                    if (field.required && input.value.trim() === '') {
+                        errorSpan.textContent = field.message;
+                        errorSpan.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        errorSpan.style.display = 'none';
+                    }
+                }
+            });
+            return isValid;
+        }
+
+        // --- Authentication Logic ---
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role-select').value;
+
+            // Mock user credentials
+            const users = {
+                'admin': { password: 'password', role: 'admin' },
+                'biller': { password: 'billingpass', role: 'biller' },
+                'auditor': { password: 'auditpass', role: 'auditor' }
+            };
+
+            if (users[username] && users[username].password === password && users[username].role === role) {
+                currentUserRole = role;
+                alert(`Logged in as ${role.charAt(0).toUpperCase() + role.slice(1)}!`);
+                showPage('dashboard');
+                updateNavigationVisibility();
+                addAuditLogEntry('Login', `User ${username} logged in as ${role}.`);
+            } else {
+                alert('Invalid credentials or role.');
+            }
+        }
+
+        function logout() {
+            addAuditLogEntry('Logout', `User ${currentUserRole} logged out.`);
+            currentUserRole = null;
+            alert('Logged out.');
+            showPage('login-page');
+            updateNavigationVisibility();
+        }
+
+        function updateNavigationVisibility() {
+            const navElements = {
+                'nav-dashboard': ['admin', 'biller', 'auditor'],
+                'nav-rules': ['admin', 'biller', 'auditor'],
+                'nav-claims': ['admin', 'biller'],
+                'nav-codes': ['admin', 'biller', 'auditor'],
+                'nav-reports': ['admin', 'biller', 'auditor'],
+                'nav-settings': ['admin'],
+                'nav-notifications': ['admin', 'biller', 'auditor'],
+                'nav-audit-log': ['admin', 'auditor'] // New audit log navigation
+            };
+
+            for (const navId in navElements) {
+                const element = document.getElementById(navId);
+                if (element) {
+                    if (currentUserRole && navElements[navId].includes(currentUserRole)) {
+                        element.style.display = 'block'; // Or 'flex' depending on parent
+                        element.style.removeProperty('display'); // Remove inline display:none if present
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
+            }
+            // Show logout only if logged in
+            const logoutButton = document.getElementById('nav-logout');
+            if (logoutButton) {
+                logoutButton.style.display = currentUserRole ? 'block' : 'none';
+            }
+        }
+
+
+        // Function to show a specific page and hide others
+        function showPage(key) {
+            console.log(`Attempting to show page: ${key}`);
+            const pageId = key.endsWith('-page') ? key : key + '-page'; // Dynamically add suffix if missing
+
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+
+            const activePageElement = document.getElementById(pageId);
+            if (activePageElement) {
+                console.log(`Found element for ${pageId}. Setting display to flex.`);
+                activePageElement.style.display = 'flex';
+            } else {
+                console.error(`Element with ID ${pageId} not found!`);
+            }
+
+            // Update active link styling
+            const navLinks = document.querySelectorAll('header a');
+            navLinks.forEach(link => {
+                // Check if the onclick attribute contains the current pageId (using original key for matching)
+                if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(`'${key}'`)) {
+                    link.classList.remove('text-[#637988]');
+                    link.classList.add('text-[#111518]');
+                } else {
+                    link.classList.remove('text-[#111518]');
+                    link.classList.add('text-[#637988]');
+                }
+            });
+
+            // Re-render content specific to the page if needed
+            if (key === 'codes') { // Use original key for logic
+                fetchHealthfinderTopicsList();
+            } else if (key === 'claims') { // Use original key for logic
+                renderClaimsHistory();
+            } else if (key === 'dashboard') {
+                renderComplianceInfo();
+                drawClaimsChart(); // Draw chart on dashboard load
+            } else if (key === 'rules') {
+                renderRulesList('all'); // Render all rules by default when rules page is shown
+            } else if (key === 'audit-log') {
+                renderAuditLog();
+            }
+            // Clear any previous status messages on page change
+            const reportOutput = document.getElementById('report-output');
+            if (reportOutput) reportOutput.style.display = 'none';
+            const settingsStatusMessage = document.getElementById('settings-status-message');
+            if (settingsStatusMessage) settingsStatusMessage.style.display = 'none';
+        }
+
+        // Function to update notification badge count
+        function updateNotifications(countChange) {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                notificationCount = Math.max(0, notificationCount + countChange);
+                badge.textContent = notificationCount;
+                badge.style.display = notificationCount > 0 ? 'inline-flex' : 'none';
+            }
+        }
+
+        // --- Rule Management Logic ---
+        function renderRulesList(filter = 'all', keyword = '') {
+            let rulesListContainer = document.getElementById('rules-list-container');
+            if (!rulesListContainer) {
+                // Create the rules-list-container if it doesn't exist
+                const rulesPage = document.getElementById('rules-page');
+                if (rulesPage) {
+                    rulesListContainer = document.createElement('div');
+                    rulesListContainer.id = 'rules-list-container';
+                    rulesListContainer.className = 'flex flex-col gap-2 p-4 w-full'; // Added w-full for responsiveness
+                    const ruleEditorSection = document.getElementById('rule-editor-section');
+                    if (ruleEditorSection) {
+                        rulesPage.insertBefore(rulesListContainer, ruleEditorSection);
+                    } else {
+                        rulesPage.appendChild(rulesListContainer);
+                    }
+                } else {
+                    console.error("Rules page container not found for dynamic rules list.");
+                    return;
+                }
+            }
+
+
+            let filteredRules = mockRules;
+            if (filter !== 'all') {
+                filteredRules = mockRules.filter(rule => rule.status === filter);
+            }
+            if (keyword) {
+                filteredRules = filteredRules.filter(rule =>
+                    rule.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                    rule.description.toLowerCase().includes(keyword.toLowerCase()) ||
+                    rule.category.toLowerCase().includes(keyword.toLowerCase())
+                );
+            }
+
+            rulesListContainer.innerHTML = ''; // Clear current list
+
+            if (filteredRules.length > 0) {
+                filteredRules.forEach(rule => {
+                    const ruleElement = document.createElement('div');
+                    ruleElement.className = 'flex items-center gap-4 bg-white px-4 min-h-14 justify-between border border-[#dce1e5] rounded-lg cursor-pointer hover:bg-[#f0f3f4]';
+                    ruleElement.innerHTML = `
+                        <p class="text-[#111518] text-base font-normal leading-normal flex-1 truncate">${rule.name} (${rule.category})</p>
+                        <div class="shrink-0"><p class="text-[#637988] text-sm font-normal leading-normal">${rule.status.charAt(0).toUpperCase() + rule.status.slice(1)}</p></div>
+                    `;
+                    ruleElement.onclick = () => populateRuleEditor(rule.id);
+                    rulesListContainer.appendChild(ruleElement);
+                });
+            } else {
+                rulesListContainer.innerHTML = '<p class="text-[#637988] text-sm font-normal leading-normal p-4">No rules found for this filter/search.</p>';
+            }
+
+            // Update counts in sidebar (ensure these elements exist or handle their absence)
+            const allRulesCountElement = document.querySelector('#rules-page .layout-content-container.flex-col.w-full.lg\\:w-80 .flex.items-center.gap-4.bg-white.px-4.min-h-14.justify-between:nth-child(2) p:last-child');
+            if (allRulesCountElement) allRulesCountElement.textContent = mockRules.length;
+
+            const activeRulesCountElement = document.querySelector('#rules-page .layout-content-container.flex-col.w-full.lg\\:w-80 .flex.items-center.gap-4.bg-white.px-4.min-h-14.justify-between:nth-child(3) p:last-child');
+            if (activeRulesCountElement) activeRulesCountElement.textContent = mockRules.filter(r => r.status === 'active').length;
+
+            const inactiveRulesCountElement = document.querySelector('#rules-page .layout-content-container.flex-col.w-full.lg\\:w-80 .flex.items-center.gap-4.bg-white.px-4.min-h-14.justify-between:nth-child(4) p:last-child');
+            if (inactiveRulesCountElement) inactiveRulesCountElement.textContent = mockRules.filter(r => r.status === 'inactive').length;
+
+            const draftRulesCountElement = document.querySelector('#rules-page .layout-content-container.flex-col.w-full.lg\\:w-80 .flex.items-center.gap-4.bg-white.px-4.min-h-14.justify-between:nth-child(5) p:last-child');
+            if (draftRulesCountElement) draftRulesCountElement.textContent = mockRules.filter(r => r.status === 'draft').length;
+
+            const archivedRulesCountElement = document.querySelector('#rules-page .layout-content-container.flex-col.w-full.lg\\:w-80 .flex.items-center.gap-4.bg-white.px-4.min-h-14.justify-between:nth-child(6) p:last-child');
+            if (archivedRulesCountElement) archivedRulesCountElement.textContent = mockRules.filter(r => r.status === 'archived').length;
+        }
+
+        function populateRuleEditor(ruleId) {
+            const rule = mockRules.find(r => r.id === ruleId);
+            if (rule) {
+                document.getElementById('ruleName').value = rule.name;
+                document.getElementById('ruleCategory').value = rule.category;
+                document.getElementById('ruleDescription').value = rule.description;
+                document.getElementById('rulePriority').value = rule.priority;
+                document.getElementById('ruleExpression').value = rule.expression;
+                document.getElementById('ruleVersionNumber').value = rule.version;
+                document.getElementById('ruleVersionNotes').value = rule.notes;
+            } else {
+                alert('Rule not found in mock data!');
+            }
+        }
+
+        function clearRuleEditor() {
+            document.getElementById('ruleName').value = '';
+            document.getElementById('ruleCategory').value = 'Medicare';
+            document.getElementById('ruleDescription').value = '';
+            document.getElementById('rulePriority').value = 'high';
+            document.getElementById('ruleExpression').value = '';
+            document.getElementById('ruleVersionNumber').value = '1.0';
+            document.getElementById('ruleVersionNotes').value = '';
+        }
+
+        function saveRule() {
+            if (!validateForm('rule-editor-section', [{ id: 'ruleName', required: true, message: 'Rule Name is required.' }])) {
+                return;
+            }
+
+            const ruleName = document.getElementById('ruleName').value;
+            const ruleCategory = document.getElementById('ruleCategory').value;
+            const ruleDescription = document.getElementById('ruleDescription').value;
+            const rulePriority = document.getElementById('rulePriority').value;
+            const ruleExpression = document.getElementById('ruleExpression').value;
+            const ruleVersionNumber = document.getElementById('ruleVersionNumber').value;
+            const ruleVersionNotes = document.getElementById('ruleVersionNotes').value;
+
+            const newRule = {
+                id: `RULE-${String(mockRules.length + 1).padStart(3, '0')}`, // Simple ID generation
+                name: ruleName,
+                category: ruleCategory,
+                description: ruleDescription,
+                priority: rulePriority,
+                expression: ruleExpression,
+                version: ruleVersionNumber,
+                notes: ruleVersionNotes,
+                status: 'active' // Default to active for new rules
+            };
+
+            mockRules.push(newRule); // Add to mock data
+            addAuditLogEntry('Rule Added/Updated', `Rule "${newRule.name}" saved.`);
+
+            alert(`Rule "${ruleName || 'Untitled Rule'}" saved successfully! (Simulated)`);
+            renderRulesList('all'); // Refresh list after saving
+            clearRuleEditor(); // Clear form after saving
+        }
+
+        function testRule() {
+            const ruleExpression = document.getElementById('ruleExpression').value;
+            let testResult = 'Rule test initiated. Check console for simulated results. (Simulated)';
+            if (ruleExpression.includes('CPT') && ruleExpression.includes('Diagnosis')) {
+                testResult = 'Simulated: Rule logic involving CPT and Diagnosis codes passed basic test.';
+            } else if (ruleExpression.includes('PA') || ruleExpression.includes('Authorization')) {
+                testResult = 'Simulated: Rule logic involving Prior Authorization passed basic test.';
+            }
+            addAuditLogEntry('Rule Tested', `Rule expression tested: "${ruleExpression.substring(0, 50)}..."`);
+            alert(testResult);
+        }
+
+        function importRules() {
+            console.log('Importing rules... (Simulated)');
+            addAuditLogEntry('Data Import', 'Rules import initiated. (Simulated)');
+            alert('Rules import initiated. (Simulated)');
+        }
+
+        function exportRules() {
+            console.log('Exporting rules... (Simulated)');
+            const data = JSON.stringify(mockRules, null, 2);
+            downloadCSV(data, 'mock_rules.json', 'application/json'); // Export as JSON for rules
+            addAuditLogEntry('Data Export', 'Rules exported to JSON. (Simulated)');
+            alert('Rules exported. (Simulated)');
+        }
+
+        // --- Claims Processing Logic ---
+        function getClaimFormData() {
+            return {
+                patientName: document.getElementById('patientName').value,
+                patientDob: document.getElementById('patientDob').value,
+                diagnosisCodes: document.getElementById('diagnosisCodes').value,
+                procedureCodes: document.getElementById('procedureCodes').value,
+                charges: document.getElementById('charges').value,
+                realTimeValidation: document.getElementById('realTimeValidation').checked,
+            };
+        }
+
+        function checkCompliance() {
+            if (!validateForm('claims-page', [{ id: 'patientName', required: true, message: 'Patient Name is required.' }])) {
+                return;
+            }
+
+            const formData = getClaimFormData();
+            console.log('Checking Compliance for Claim:', formData);
+
+            const complianceResultsSection = document.getElementById('compliance-results-section');
+            if (complianceResultsSection) {
+                complianceResultsSection.style.display = 'block'; // Show the results section
+            }
+
+            claimCounter++;
+            const newClaimId = `CLM-${String(claimCounter).padStart(3, '0')}`;
+            const submissionDate = new Date().toISOString().slice(0, 10);
+            const status = Math.random() > 0.5 ? 'Processed' : 'Rejected';
+            const errors = status === 'Rejected' ? '1 Error, 0 Warnings' : '0 Errors, 1 Warning';
+
+            const newClaim = {
+                id: newClaimId,
+                patient: formData.patientName || 'N/A',
+                date: submissionDate,
+                status: status,
+                errors: errors,
+            };
+
+            claimsHistory.unshift(newClaim); // Add to top of history
+            renderClaimsHistory(); // Re-render the history table
+            addAuditLogEntry('Claim Checked', `Claim ${newClaim.id} processed with status: ${newClaim.status}.`);
+
+            alert('Compliance check completed! (Simulated)');
+            updateNotifications(1); // Simulate a new notification
+        }
+
+        function renderClaimsHistory() {
+            const tableBody = document.querySelector('#claim-history-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = ''; // Clear existing rows
+                claimsHistory.forEach(claim => {
+                    const row = tableBody.insertRow();
+                    row.className = 'border-t border-t-[#dce1e5]';
+                    row.innerHTML = `
+                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">${claim.id}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${claim.patient}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${claim.date}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${claim.status}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${claim.errors}</td>
+                    `;
+                });
+            }
+        }
+
+        function batchUploadClaims() {
+            console.log('Batch uploading claims... (Simulated)');
+            addAuditLogEntry('Claim Batch Upload', 'Batch upload initiated. (Simulated)');
+            alert('Batch upload initiated. (Simulated)');
+        }
+
+        function toggleRealtimeValidation() {
+            const checkbox = document.getElementById('realTimeValidation');
+            console.log('Real-time validation toggled:', checkbox.checked);
+            addAuditLogEntry('Setting Change', `Real-time validation toggled to ${checkbox.checked}.`);
+            alert(`Real-time validation is now ${checkbox.checked ? 'ON' : 'OFF'}. (Simulated)`);
+        }
+
+        function simulateAppeal() {
+            alert('Simulating appeal process for this item. (Mock)');
+            addAuditLogEntry('Appeal Initiated', 'Appeal button clicked. (Simulated)');
+            closeModal('appeal-modal');
+        }
+
+        // --- Reports Logic ---
+        function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const reportDateRange = document.getElementById('report-date-range').value;
+            const reportOutputDiv = document.getElementById('report-output');
+
+            console.log('Generating Report:', { type: reportType, dateRange: reportDateRange });
+
+            let summary = `Report Type: ${reportType}<br>Date Range: ${reportDateRange}<br><br>`;
+
+            if (reportType === "Compliance Summary") {
+                summary += `Overall Compliance Rate: 98.2%<br>`;
+                summary += `Total Claims Checked: 15,000<br>`;
+                summary += `Total Errors: 250<br>`;
+                summary += `Total Warnings: 500<br>`;
+            } else if (reportType === "Payer Performance") {
+                summary += `Medicare Rejection Rate: 2.5%<br>`;
+                summary += `Medicaid Rejection Rate: 3.1%<br>`;
+                summary += `Blue Cross Blue Shield Rejection Rate: 1.8%<br>`;
+            } else if (reportType === "Code Usage") {
+                summary += `Most Used CPT Code: 99213 (Office visit, established patient)<br>`;
+                summary += `Most Common Diagnosis Code: I10 (Essential hypertension)<br>`;
+            }
+
+            reportOutputDiv.innerHTML = `Report Generated!<br>${summary}`;
+            reportOutputDiv.style.display = 'block';
+            addAuditLogEntry('Report Generated', `Report "${reportType}" for "${reportDateRange}" generated.`);
+
+            alert(`Report "${reportType}" for "${reportDateRange}" generated. (Simulated)`);
+        }
+
+        function simulateExportPdf() {
+            alert('Simulating PDF export. (Mock)');
+            addAuditLogEntry('Report Export', 'Report exported to PDF. (Simulated)');
+        }
+
+        function exportReportCSV() {
+            // This is a simplified mock CSV export
+            const headers = ['Report Type', 'Date Range', 'Summary'];
+            const rows = [
+                ['Compliance Summary', 'Last 30 Days', 'Overall Compliance Rate: 98.2%, Total Claims Checked: 15000, Total Errors: 250, Total Warnings: 500'],
+                // Add more rows based on actual report data if you expand mock reports
+            ];
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { // Feature detection for download attribute
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'mock_report.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            addAuditLogEntry('Report Export', 'Report exported to CSV. (Simulated)');
+            alert('Report exported to CSV. (Simulated)');
+        }
+
+        // --- Settings Logic ---
+        function saveSettings() {
+            const systemName = document.getElementById('systemName').value;
+            const defaultTimezone = document.getElementById('defaultTimezone').value;
+            const ehrIntegrationStatus = document.getElementById('ehrIntegrationStatus').value;
+            const payerApiKey = document.getElementById('payerApiKey').value;
+            const settingsStatusMessageDiv = document.getElementById('settings-status-message');
+
+            console.log('Saving Settings:', {
+                systemName: systemName,
+                defaultTimezone: defaultTimezone,
+                ehrIntegrationStatus: ehrIntegrationStatus,
+                payerApiKey: payerApiKey ? '********' : ''
+            });
+
+            settingsStatusMessageDiv.textContent = `Settings saved successfully! System Name: "${systemName}", Time Zone: "${defaultTimezone}", EHR Status: "${ehrIntegrationStatus}".`;
+            settingsStatusMessageDiv.style.display = 'block';
+            settingsStatusMessageDiv.style.color = '#078838';
+            addAuditLogEntry('Settings Saved', 'System settings updated. (Simulated)');
+
+            alert('System settings saved successfully! (Simulated)');
+        }
+
+        function updateCodeSets() {
+            const settingsStatusMessageDiv = document.getElementById('settings-status-message');
+            console.log('Attempting to update code sets (ICD-10, CPT)... (Simulated)');
+            settingsStatusMessageDiv.textContent = 'Code set update initiated. This process might take some time. Check notifications for completion.';
+            settingsStatusMessageDiv.style.display = 'block';
+            settingsStatusMessageDiv.style.color = '#1993e5';
+            addAuditLogEntry('Code Set Update', 'Code set update initiated. (Simulated)');
+            alert('Code set update initiated. (Simulated)');
+        }
+
+        function handleEHRIntegrationChange() {
+            const status = document.getElementById('ehrIntegrationStatus').value;
+            const settingsStatusMessageDiv = document.getElementById('settings-status-message');
+            console.log('EHR/PMS Integration Status changed to:', status);
+            settingsStatusMessageDiv.textContent = `EHR/PMS integration status updated to ${status}.`;
+            settingsStatusMessageDiv.style.display = 'block';
+            settingsStatusMessageDiv.style.color = '#1993e5';
+            addAuditLogEntry('Integration Change', `EHR/PMS integration status updated to ${status}.`);
+            alert(`EHR/PMS integration status updated to ${status}. (Simulated)`);
+        }
+
+        function simulateEditPayer(payerName) {
+            document.getElementById('edit-payer-name').textContent = `Editing: ${payerName}`;
+            showModal('edit-payer-modal');
+            addAuditLogEntry('Payer Edit', `Opened edit modal for payer: ${payerName}.`);
+        }
+
+        function simulateAddPayer() {
+            showModal('add-payer-modal');
+            addAuditLogEntry('Payer Add', 'Opened add payer modal.');
+        }
+
+        function simulateEditUser(userName) {
+            document.getElementById('edit-user-name').textContent = `Editing: ${userName}`;
+            showModal('edit-user-modal');
+            addAuditLogEntry('User Edit', `Opened edit modal for user: ${userName}.`);
+        }
+
+        function simulateAddUser() {
+            showModal('add-user-modal');
+            addAuditLogEntry('User Add', 'Opened add user modal.');
+        }
+
+        // --- MyHealthfinder API Integration (Mocked for CORS) ---
+        function fetchHealthfinderTopicsList() {
+            const healthTopicsListDiv = document.getElementById('health-topics-list');
+            healthTopicsListDiv.innerHTML = '<p class="text-[#637988] text-sm font-normal leading-normal">Loading health topics...</p>';
+
+            setTimeout(() => { // Simulate API call delay
+                if (mockHealthTopics.length > 0) {
+                    healthTopicsListDiv.innerHTML = ''; // Clear loading message
+                    mockHealthTopics.forEach(item => {
+                        const topicDiv = document.createElement('div');
+                        topicDiv.className = 'flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f3f4] pl-4 pr-4 cursor-pointer hover:bg-[#dce1e5]';
+                        topicDiv.innerHTML = `<p class="text-[#111518] text-sm font-medium leading-normal">${item.Title}</p>`;
+                        topicDiv.onclick = () => displayTopicDetails(item.Id);
+                        healthTopicsListDiv.appendChild(topicDiv);
+                    });
+                } else {
+                    healthTopicsListDiv.innerHTML = '<p class="text-[#e73508] text-sm font-normal leading-normal">No health topics found or simulated API error.</p>';
+                }
+            }, 500);
+        }
+
+        function searchHealthfinderTopics() {
+            const searchInput = document.getElementById('code-search-input');
+            const keyword = searchInput.value.trim().toLowerCase();
+            const topicDetailsDiv = document.getElementById('topic-details');
+
+            if (!keyword) {
+                topicDetailsDiv.innerHTML = '<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">Please enter a keyword to search.</p>';
+                return;
+            }
+
+            topicDetailsDiv.innerHTML = '<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">Searching for topics...</p>';
+
+            setTimeout(() => { // Simulate delay
+                // Search across all mock code types and health topics
+                const allSearchableItems = [
+                    ...mockHealthTopics.map(item => ({ type: 'Health Topic', code: item.Id, description: item.Title, url: item.HealthfinderUrl })),
+                    ...mockICD10Codes.map(item => ({ type: 'ICD-10', code: item.code, description: item.description })),
+                    ...mockCPTCodes.map(item => ({ type: 'CPT', code: item.code, description: item.description })),
+                    ...mockOtherCodes.map(item => ({ type: 'Other', code: item.code, description: item.description }))
+                ];
+
+                const filteredResults = allSearchableItems.filter(item =>
+                    item.code.toLowerCase().includes(keyword) ||
+                    item.description.toLowerCase().includes(keyword)
+                );
+
+                if (filteredResults.length > 0) {
+                    let resultsHtml = '<p class="text-[#111518] text-base font-medium leading-normal col-span-2 mb-2">Search Results:</p>';
+                    filteredResults.forEach(result => {
+                        resultsHtml += `
+                            <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-3">
+                                <p class="text-[#637988] text-sm font-normal leading-normal">${result.type} Code:</p>
+                                <p class="text-[#111518] text-sm font-normal leading-normal">${result.code}</p>
+                                <p class="text-[#637988] text-sm font-normal leading-normal">Description:</p>
+                                <p class="text-[#111518] text-sm font-normal leading-normal">${result.description}</p>
+                                ${result.url ? `<p class="text-[#637988] text-sm font-normal leading-normal">More Info:</p><p class="text-[#111518] text-sm font-normal leading-normal"><a href="${result.url}" target="_blank" class="text-[#1993e5] hover:underline">View on Healthfinder.gov</a></p>` : ''}
+                            </div>
+                        `;
+                    });
+                    topicDetailsDiv.innerHTML = resultsHtml;
+                } else {
+                    topicDetailsDiv.innerHTML = `<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">No results found for "${keyword}".</p>`;
+                }
+            }, 500);
+        }
+
+        function displayTopicDetails(topicId) {
+            const topicDetailsDiv = document.getElementById('topic-details');
+            topicDetailsDiv.innerHTML = '<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">Loading topic details...</p>';
+
+            setTimeout(() => { // Simulate delay
+                const topic = mockTopicDetails[topicId];
+                if (topic) {
+                    let sectionsHtml = '';
+                    if (topic.Sections && topic.Sections.Section) {
+                        topic.Sections.Section.forEach(section => {
+                            sectionsHtml += `
+                                <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-5">
+                                    <p class="text-[#637988] text-sm font-normal leading-normal">${section.Title}</p>
+                                    <p class="text-[#111518] text-sm font-normal leading-normal">${section.Content}</p>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        sectionsHtml = '<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">No detailed sections available.</p>';
+                    }
+
+                    topicDetailsDiv.innerHTML = `
+                        <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-5">
+                            <p class="text-[#637988] text-sm font-normal leading-normal">Title</p>
+                            <p class="text-[#111518] text-sm font-normal leading-normal">${topic.Title}</p>
+                        </div>
+                        <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-5">
+                            <p class="text-[#637988] text-sm font-normal leading-normal">Last Update</p>
+                            <p class="text-[#111518] text-sm font-normal leading-normal">${topic.LastUpdate}</p>
+                        </div>
+                        ${sectionsHtml}
+                        <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-5">
+                            <p class="text-[#637988] text-sm font-normal leading-normal">More Info</p>
+                            <p class="text-[#111518] text-sm font-normal leading-normal"><a href="${topic.HealthfinderUrl}" target="_blank" class="text-[#1993e5] hover:underline">View on Healthfinder.gov</a></p>
+                        </div>
+                    `;
+                } else {
+                    topicDetailsDiv.innerHTML = '<p class="text-[#e73508] text-sm font-normal leading-normal col-span-2">Could not retrieve details for this topic from mock data.</p>';
+                }
+            }, 500);
+        }
+
+        // Function to handle clicks on CPT, Other Codes tabs
+        function handleCodeTabClick(tabName) {
+            const topicDetailsDiv = document.getElementById('topic-details');
+            topicDetailsDiv.innerHTML = `<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">Loading ${tabName.toUpperCase()} codes...</p>`;
+
+            let codesToDisplay = [];
+            if (tabName === 'icd-10') {
+                codesToDisplay = mockICD10Codes;
+            } else if (tabName === 'cpt') {
+                codesToDisplay = mockCPTCodes;
+            } else if (tabName === 'other') {
+                codesToDisplay = mockOtherCodes;
+            }
+
+            setTimeout(() => {
+                if (codesToDisplay.length > 0) {
+                    let htmlContent = `<p class="text-[#111518] text-base font-medium leading-normal col-span-2 mb-2">${tabName.toUpperCase()} Codes:</p>`;
+                    codesToDisplay.forEach(code => {
+                        htmlContent += `
+                            <div class="col-span-2 grid grid-cols-subgrid border-t border-t-[#dce1e5] py-3">
+                                <p class="text-[#637988] text-sm font-normal leading-normal">Code:</p>
+                                <p class="text-[#111518] text-sm font-normal leading-normal">${code.code}</p>
+                                <p class="text-[#637988] text-sm font-normal leading-normal">Description:</p>
+                                <p class="text-[#111518] text-sm font-normal leading-normal">${code.description}</p>
+                            </div>
+                        `;
+                    });
+                    topicDetailsDiv.innerHTML = htmlContent;
+                } else {
+                    topicDetailsDiv.innerHTML = `<p class="text-[#637988] text-sm font-normal leading-normal col-span-2">No ${tabName.toUpperCase()} codes available in mock data.</p>`;
+                }
+            }, 500);
+        }
+
+        // Function to render compliance requirements and software features on the dashboard
+        function renderComplianceInfo() {
+            const complianceInfoDiv = document.getElementById('compliance-info');
+            if (!complianceInfoDiv) {
+                console.error("Element with ID 'compliance-info' not found!");
+                return;
+            }
+
+            let htmlContent = `
+                <div class="flex min-w-full md:min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                    <p class="text-[#111518] text-base font-medium leading-normal font-bold mb-2">Key Compliance Requirements</p>
+                    <ul class="list-disc list-inside text-[#111518] text-sm font-normal leading-normal space-y-1">
+            `;
+            mockKeyRequirements.forEach(req => {
+                htmlContent += `<li>${req}</li>`;
+            });
+            htmlContent += `
+                    </ul>
+                </div>
+                <div class="flex min-w-full md:min-w-72 flex-1 flex-col gap-2 rounded-lg border border-[#dce1e5] p-6">
+                    <p class="text-[#111518] text-base font-medium leading-normal font-bold mb-2">Specific Medical Billing Software Features</p>
+                    <ul class="list-disc list-inside text-[#111518] text-sm font-normal leading-normal space-y-1">
+            `;
+            mockSoftwareFeatures.forEach(feature => {
+                htmlContent += `<li>${feature}</li>`;
+            });
+            htmlContent += `
+                    </ul>
+                </div>
+            `;
+            complianceInfoDiv.innerHTML = htmlContent;
+        }
+
+        // Function to draw a mock chart on the dashboard
+        function drawClaimsChart() {
+            const canvas = document.getElementById('claims-chart');
+            if (!canvas) {
+                console.error("Canvas element with ID 'claims-chart' not found!");
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            const data = [1000, 1200, 900, 1500, 1100, 1300, 1050]; // Mock data points
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background
+            ctx.fillStyle = '#f0f3f4';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines (simplified)
+            ctx.strokeStyle = '#dce1e5';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = canvas.height - 20 - (i * (canvas.height - 40) / 4);
+                ctx.beginPath();
+                ctx.moveTo(20, y);
+                ctx.lineTo(canvas.width - 20, y);
+                ctx.stroke();
+            }
+
+            // Draw bars
+            const barWidth = (canvas.width - 40) / data.length / 1.5;
+            const maxVal = Math.max(...data);
+            const scaleY = (canvas.height - 40) / maxVal;
+
+            ctx.fillStyle = '#1993e5';
+            data.forEach((val, index) => {
+                const x = 20 + index * (barWidth * 1.5);
+                const barHeight = val * scaleY;
+                ctx.fillRect(x, canvas.height - 20 - barHeight, barWidth, barHeight);
+            });
+
+            // Draw labels
+            ctx.fillStyle = '#637988';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'center';
+            labels.forEach((label, index) => {
+                const x = 20 + index * (barWidth * 1.5) + barWidth / 2;
+                ctx.fillText(label, x, canvas.height - 5);
+            });
+        }
+
+        // --- Audit Log Logic ---
+        function addAuditLogEntry(action, details) {
+            const timestamp = new Date().toLocaleString();
+            const user = currentUserRole || 'N/A';
+            auditLog.unshift({ timestamp, user, action, details }); // Add to front
+            // Keep log size manageable for mock
+            if (auditLog.length > 50) {
+                auditLog.pop();
+            }
+            // Only render if the audit log page is currently active
+            if (document.getElementById('audit-log-page').style.display === 'flex') {
+                renderAuditLog();
+            }
+        }
+
+        function renderAuditLog() {
+            const tableBody = document.querySelector('#audit-log-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = ''; // Clear existing rows
+                auditLog.forEach(entry => {
+                    const row = tableBody.insertRow();
+                    row.className = 'border-t border-t-[#dce1e5]';
+                    row.innerHTML = `
+                        <td class="h-[72px] px-4 py-2 text-[#111518] text-sm font-normal leading-normal">${entry.timestamp}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${entry.user}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${entry.action}</td>
+                        <td class="h-[72px] px-4 py-2 text-[#637988] text-sm font-normal leading-normal">${entry.details}</td>
+                    `;
+                });
+            }
+        }
+
+        function clearAuditLog() {
+            if (confirm('Are you sure you want to clear the audit log? This action cannot be undone.')) {
+                auditLog = [];
+                renderAuditLog();
+                addAuditLogEntry('Audit Log Cleared', 'User cleared the audit log. (Simulated)');
+                alert('Audit log cleared! (Simulated)');
+            }
+        }
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOMContentLoaded fired. Initializing page.");
+
+            // Set initial page to login
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('dashboard-page').style.display = 'none'; // Ensure dashboard is hidden initially
+
+            // Hide all other pages explicitly (redundant with CSS but safe)
+            const allPages = document.querySelectorAll('.page-content');
+            allPages.forEach(page => {
+                if (page.id !== 'login-page') {
+                    page.style.display = 'none';
+                }
+            });
+
+            // Update navigation visibility based on initial (logged out) state
+            updateNavigationVisibility();
+            // Initialize notification badge
+            updateNotifications(0);
+        });
+    </script>
+</body>
+</html>
